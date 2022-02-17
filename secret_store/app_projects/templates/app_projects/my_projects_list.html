@@ -1,0 +1,12 @@
+{%extends 'base.html' %}
+
+{% block myprojects %}
+
+{%if my_projects%}
+{% for project in my_projects %}
+<h3>{{project.name}}</h3>
+{% endfor %}
+{%else%}
+<h2>Nothing to show</h2>
+{%endif%}
+{% endblock %}
