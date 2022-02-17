@@ -1,6 +1,5 @@
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render, redirect
-from django.views.generic import *
 # Create your views here.
 from django.urls import reverse
 
@@ -22,4 +21,9 @@ def register(request):
 
 class Login(LoginView):
     template_name = "app_users/login.html"
+    success_url = "/"
+
+
+class Logout(LogoutView):
+    template_name = "app_users/logout.html"
     success_url = "/"
