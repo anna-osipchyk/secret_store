@@ -9,6 +9,9 @@ class VariableModel(models.Model):
     edited_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        unique_together = ('name', 'id')
+
 
 class ProjectModel(models.Model):
     owner = models.ForeignKey(User, related_name="projects", on_delete=models.CASCADE)
@@ -17,3 +20,6 @@ class ProjectModel(models.Model):
     variables = models.ManyToManyField(
         VariableModel, related_name="project", null=True, blank=True
     )
+
+    class Meta:
+        unique_together = ('name', 'id')
