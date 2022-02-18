@@ -1,0 +1,15 @@
+{%extends 'base.html' %}
+
+{%block content%}
+<br>
+<form method="post">{% csrf_token %}
+
+
+
+<p>Are you sure you want to delete "{{ my_project.name }}"?</p>
+
+
+
+    <input type="submit" value="Confirm">
+</form>
+{%endblock%}
