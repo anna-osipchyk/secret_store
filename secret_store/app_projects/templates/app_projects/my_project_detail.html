@@ -12,7 +12,8 @@ Nothing to show
 {{variable.name}}={{variable.value}}
 <br>
 <br>
-<a href="{% url 'delete_variable' variable.id%}">Delete variable</a>
+<a href="{% url 'delete_variable' my_project.id variable.id%}">Delete variable</a>
+<a href="{% url 'edit_variable' my_project.id variable.id%}">Edit variable</a>
 {% endfor %}
 {% endif %}
 <br>

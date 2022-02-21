@@ -7,6 +7,7 @@ from .views import (
     DeleteProject,
     AddVariable,
     DeleteVariable,
+    EditVariable,
 )
 
 urlpatterns = [
@@ -16,5 +17,6 @@ urlpatterns = [
     path("create/", CreateProject.as_view(), name="create_project"),
     path("delete/<int:pk>/", DeleteProject.as_view(), name="delete_project"),
     path("<int:pk>/add_variable/", AddVariable.as_view(), name="add_variable"),
-    path("delete_variable/<int:pk>", DeleteVariable.as_view(), name="delete_variable"),
+    path("<int:project_id>/delete_variable/<int:pk>", DeleteVariable.as_view(), name="delete_variable"),
+    path("<int:project_id>/edit_variable/<int:pk>", EditVariable.as_view(), name="edit_variable")
 ]

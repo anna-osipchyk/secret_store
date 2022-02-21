@@ -1,10 +1,10 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView
 from .models import ProjectModel, VariableModel
-from .forms import NewProjectForm, NewVariableForm
+from .forms import NewProjectForm, VariableForm
 from django.db import transaction
 
 
@@ -59,7 +59,7 @@ class CreateProject(LoginRequiredMixin, CreateView):
         return HttpResponse("Value with this name already exists in your project!")
 
 
-class DeleteProject(DeleteView):
+class DeleteProject(LoginRequiredMixin, DeleteView):
     template_name = "app_projects/my_project_delete.html"
     success_url = reverse_lazy("my_projects")
     model = ProjectModel
@@ -75,8 +75,9 @@ class DeleteProject(DeleteView):
             return HttpResponseRedirect(self.success_url)
 
 
-class AddVariable(LoginRequiredMixin, CreateView):
-    form_class = NewVariableForm
+class AddVariable(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = ('app_projects.can_add', 'app_projects.can_edit', 'app_projects.can_view')
+    form_class = VariableForm
     context_object_name = "variable"
     success_url = reverse_lazy("my_projects")
     template_name = "app_projects/variable_add.html"
@@ -95,8 +96,31 @@ class AddVariable(LoginRequiredMixin, CreateView):
         return HttpResponse("Value with this name already exists in your project!")
 
 
-class DeleteVariable(LoginRequiredMixin, DeleteView):
+class DeleteVariable(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = ('app_projects.can_edit', 'app_projects.can_view', 'app_project.can_delete')
     template_name = "app_projects/variable_delete.html"
     success_url = reverse_lazy("my_projects")
     model = VariableModel
     context_object_name = "variable"
+
+
+class EditVariable(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = ('app_projects.can_edit', 'app_projects.can_view')
+    template_name = "app_projects/variable_edit.html"
+    success_url = reverse_lazy("my_projects")
+    model = VariableModel
+    form_class = VariableForm
+    context_object_name = "variable"
+
+    def form_valid(self, form):
+        self.variable = form.save(commit=False)
+        project_id = self.kwargs.get("project_id")
+        variable_name = form.cleaned_data["name"]
+        variables_of_project = VariableModel.objects.filter(
+            Q(project__id=project_id) & Q(name=variable_name)
+        )
+        if len(variables_of_project) == 0:
+            self.variable.project = ProjectModel.objects.get(id=project_id)
+            self.variable.save()
+            return HttpResponseRedirect(self.success_url)
+        return HttpResponse("Value with this name already exists in your project!")

@@ -8,7 +8,7 @@ class NewProjectForm(ModelForm):
         fields = ("name",)
 
 
-class NewVariableForm(ModelForm):
+class VariableForm(ModelForm):
     class Meta:
         model = VariableModel
         fields = (
