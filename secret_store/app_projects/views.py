@@ -75,8 +75,7 @@ class DeleteProject(LoginRequiredMixin, DeleteView):
             return HttpResponseRedirect(self.success_url)
 
 
-class AddVariable(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    permission_required = ('app_projects.can_add', 'app_projects.can_edit', 'app_projects.can_view')
+class AddVariable(LoginRequiredMixin, CreateView):
     form_class = VariableForm
     context_object_name = "variable"
     success_url = reverse_lazy("my_projects")
@@ -96,16 +95,14 @@ class AddVariable(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return HttpResponse("Value with this name already exists in your project!")
 
 
-class DeleteVariable(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
-    permission_required = ('app_projects.can_edit', 'app_projects.can_view', 'app_project.can_delete')
+class DeleteVariable(LoginRequiredMixin, DeleteView):
     template_name = "app_projects/variable_delete.html"
     success_url = reverse_lazy("my_projects")
     model = VariableModel
     context_object_name = "variable"
 
 
-class EditVariable(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    permission_required = ('app_projects.can_edit', 'app_projects.can_view')
+class EditVariable(LoginRequiredMixin, UpdateView):
     template_name = "app_projects/variable_edit.html"
     success_url = reverse_lazy("my_projects")
     model = VariableModel
