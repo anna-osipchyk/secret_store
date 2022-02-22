@@ -1,0 +1,15 @@
+{%extends 'base.html' %}
+
+{% block myprojects %}
+<a href="{% url 'register'%}"> Register </a>
+{%if my_projects%}
+{% for project in my_projects %}
+<h3>{{project.name}}</h3>
+<a href="{% url 'my_project' project.id %}">Go</a>
+{% endfor %}
+{%else%}
+<h2>Nothing to show</h2>
+{%endif%}
+<br>
+<a href="{% url 'create_project'  %}">Create new</a>
+{% endblock %}
