@@ -2,7 +2,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+    DeleteView,
+    UpdateView,
+)
 from .models import ProjectModel, VariableModel
 from .forms import NewProjectForm, VariableForm
 from django.db import transaction
@@ -20,11 +26,44 @@ class MyProjects(LoginRequiredMixin, ListView):
 # Create your views here.
 
 
-class AllProjects(ListView):
+class MySharedProjects(LoginRequiredMixin, ListView):
     model = ProjectModel
     template_name = "app_projects/all_projects_list.html"
     context_object_name = "projects"
-    queryset = ProjectModel.objects.all()
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        shared_projects = ProjectModel.objects.prefetch_related("shared").filter(
+            viewers__id=user_id
+        )
+        return shared_projects
+
+
+class MyViewedProjects(LoginRequiredMixin, ListView):
+    model = ProjectModel
+    template_name = "app_projects/all_projects_list.html"
+    context_object_name = "projects"
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        shared_projects = ProjectModel.objects.prefetch_related("viewers").filter(
+            Q(viewers__id=user_id) & ~Q(shared__id=user_id)
+        )
+        return shared_projects
+
+    # def get_context_data(self, *, object_list=None, **kwargs):
+    #     context = super().get_context_data(object_list=None, **kwargs)
+    #     user_id = self.request.user.id
+    #     # projects that user has permission to view or edit
+    #     visible_projects = ProjectModel.objects.prefetch_related("viewers").filter(
+    #         viewers__id=user_id
+    #     )
+    #     shared_projects = visible_projects.prefetch_related("shared").filter(
+    #         shared__id=user_id
+    #     )
+    #     context["visible_projects"] = visible_projects
+    #     context["shared_projects"] = shared_projects
+    #     return context
 
 
 class MyProject(LoginRequiredMixin, DetailView):
