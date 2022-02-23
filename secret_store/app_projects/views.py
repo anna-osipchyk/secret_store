@@ -9,18 +9,51 @@ from django.views.generic import (
     DeleteView,
     UpdateView,
 )
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+
+from .serializers import ProjectSerializer
+from rest_framework.views import APIView
+
 from .models import ProjectModel, VariableModel
 from .forms import NewProjectForm, VariableForm
 from django.db import transaction
 
 
-class MyProjects(LoginRequiredMixin, ListView):
-    login_url = reverse_lazy("login")
-    template_name = "app_projects/my_projects_list.html"
-    context_object_name = "my_projects"
+class MyProjects(APIView):
+    def get(self, request):
+        my_projects = ProjectModel.objects.filter(owner__id=request.user.id)
+        serializer = ProjectSerializer(my_projects, many=True)
+        return Response({"my_projects": serializer.data})
 
-    def get_queryset(self):
-        return ProjectModel.objects.filter(owner__id=self.request.user.id)
+    def post(self, request):
+        my_project = request.data.get("my_project")
+        serializer = ProjectSerializer(data=my_project)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"OK": "Created"})
+
+    def put(self, request, pk):
+        my_project = get_object_or_404(ProjectModel, pk=pk)
+        data = request.data.get("my_project")
+        serializer = ProjectSerializer(instance=my_project, data=data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"my_projects": serializer.data})
+
+    def delete(self, request, pk):
+        my_project = get_object_or_404(ProjectModel, pk=pk)
+        my_project.delete()
+        return Response({"OK": "Deleted"})
+
+
+# class MyProjects(LoginRequiredMixin, ListView):
+#     login_url = reverse_lazy("login")
+#     template_name = "app_projects/my_projects_list.html"
+#     context_object_name = "my_projects"
+#
+#     def get_queryset(self):
+#         return ProjectModel.objects.filter(owner__id=self.request.user.id)
 
 
 # Create your views here.

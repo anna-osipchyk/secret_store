@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "app_users",
     "app_projects",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -127,7 +128,7 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_REDIRECT_URL = "/projects/my_projects/"
+LOGIN_REDIRECT_URL = "/api/my_projects/"
 # LOGOUT_REDIRECT_URL = '/projects/feed/'
 INTERNAL_IPS = [
     "127.0.0.1",
