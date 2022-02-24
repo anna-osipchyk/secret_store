@@ -12,7 +12,7 @@ from django.views.generic import (
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from .serializers import ProjectSerializer
+from .serializers import ProjectSerializer, VariableSerializer
 from rest_framework.views import APIView
 
 from .models import ProjectModel, VariableModel
@@ -23,6 +23,7 @@ from django.db import transaction
 class MyProjects(APIView):
     def get(self, request):
         my_projects = ProjectModel.objects.filter(owner__id=request.user.id)
+        print(my_projects)
         serializer = ProjectSerializer(my_projects, many=True)
         return Response({"my_projects": serializer.data})
 
@@ -47,104 +48,56 @@ class MyProjects(APIView):
         return Response({"OK": "Deleted"})
 
 
-# class MyProjects(LoginRequiredMixin, ListView):
-#     login_url = reverse_lazy("login")
-#     template_name = "app_projects/my_projects_list.html"
-#     context_object_name = "my_projects"
-#
-#     def get_queryset(self):
-#         return ProjectModel.objects.filter(owner__id=self.request.user.id)
-
-
-# Create your views here.
-
-
-class MySharedProjects(LoginRequiredMixin, ListView):
-    model = ProjectModel
-    template_name = "app_projects/all_projects_list.html"
-    context_object_name = "projects"
-
-    def get_queryset(self):
-        user_id = self.request.user.id
+class MySharedProjects(APIView):
+    def get(self, request):
+        user_id = request.user.id
         shared_projects = ProjectModel.objects.prefetch_related("shared").filter(
-            viewers__id=user_id
+            shared__id=user_id
         )
-        return shared_projects
+        serializer = ProjectSerializer(shared_projects, many=True)
+        return Response({"shared_projects": serializer.data})
 
 
-class MyViewedProjects(LoginRequiredMixin, ListView):
-    model = ProjectModel
-    template_name = "app_projects/all_projects_list.html"
-    context_object_name = "projects"
-
-    def get_queryset(self):
-        user_id = self.request.user.id
-        shared_projects = ProjectModel.objects.prefetch_related("viewers").filter(
+class MyViewedProjects(APIView):
+    def get(self, request):
+        user_id = request.user.id
+        viewed_projects = ProjectModel.objects.prefetch_related("viewers").filter(
             Q(viewers__id=user_id) & ~Q(shared__id=user_id)
         )
-        return shared_projects
-
-    # def get_context_data(self, *, object_list=None, **kwargs):
-    #     context = super().get_context_data(object_list=None, **kwargs)
-    #     user_id = self.request.user.id
-    #     # projects that user has permission to view or edit
-    #     visible_projects = ProjectModel.objects.prefetch_related("viewers").filter(
-    #         viewers__id=user_id
-    #     )
-    #     shared_projects = visible_projects.prefetch_related("shared").filter(
-    #         shared__id=user_id
-    #     )
-    #     context["visible_projects"] = visible_projects
-    #     context["shared_projects"] = shared_projects
-    #     return context
+        serializer = ProjectSerializer(viewed_projects, many=True)
+        return Response({"viewed_projects": serializer.data})
 
 
-class MyProject(LoginRequiredMixin, DetailView):
-    model = ProjectModel
-    template_name = "app_projects/my_project_detail.html"
-    context_object_name = "my_project"
+class MyProjectVariables(APIView):
+    def get(self, request, pk):
+        project = get_object_or_404(ProjectModel, pk=pk)
+        variables_of_project = VariableModel.objects.filter(project__id=project.id)
+        serializer = VariableSerializer(variables_of_project, many=True)
+        return Response({"variables": serializer.data})
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        project_id = self.kwargs.get("pk")
-        context["variables"] = VariableModel.objects.filter(project__id=project_id)
-        return context
+    def post(self, request, fk):
+        project = get_object_or_404(ProjectModel, pk=fk)
+        variables_of_project = request.data.get("my_variables")
+        serializer = VariableSerializer(data=variables_of_project)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"OK": "Created"})
 
+    def put(self, request, fk, pk):
 
-class CreateProject(LoginRequiredMixin, CreateView):
-    form_class = NewProjectForm
-    context_object_name = "project"
-    success_url = reverse_lazy("my_projects")
-    template_name = "app_projects/my_project_create.html"
+        my_project = get_object_or_404(ProjectModel, pk=fk)
+        data = request.data.get("my_variable")
+        variable = get_object_or_404(VariableModel, pk=pk)
+        serializer = VariableSerializer(instance=variable, data=data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"variables": serializer.data})
 
-    def form_valid(self, form):
-        project_name = form.cleaned_data["name"]
-        self.project = form.save(commit=False)
-        projects = ProjectModel.objects.filter(
-            Q(owner__id=self.request.user.id) & Q(name=project_name)
-        )
-        if len(projects) == 0:
-            self.project.owner = self.request.user
-            self.project.save()
-            return HttpResponseRedirect(self.success_url)
-
-        return HttpResponse("Value with this name already exists in your project!")
-
-
-class DeleteProject(LoginRequiredMixin, DeleteView):
-    template_name = "app_projects/my_project_delete.html"
-    success_url = reverse_lazy("my_projects")
-    model = ProjectModel
-    context_object_name = "my_project"
-
-    def delete(self, request, *args, **kwargs):
-        with transaction.atomic():
-            my_project = self.get_object(queryset=None)
-            variables = VariableModel.objects.filter(project__id=my_project.id)
-            for variable in variables:
-                variable.delete()
-            my_project.delete()
-            return HttpResponseRedirect(self.success_url)
+    def delete(self, request, fk, pk):
+        my_project = get_object_or_404(ProjectModel, pk=fk)
+        variable = get_object_or_404(VariableModel, pk=pk)
+        variable.delete()
+        return Response({"OK": "Deleted"})
 
 
 class AddVariable(LoginRequiredMixin, CreateView):
