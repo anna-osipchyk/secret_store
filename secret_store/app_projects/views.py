@@ -41,7 +41,9 @@ class MyProjects(APIView):
     permission_classes = [IsAuthenticated, OwnerPermission]
 
     def get(self, request):
-        my_projects = ProjectModel.objects.filter(owner__id=request.user.id)
+        my_projects = ProjectModel.objects.prefetch_related("shared", "viewers").filter(
+            owner__id=request.user.id
+        )
         print(my_projects)
         serializer = ProjectSerializer(my_projects, many=True)
         return Response({"my_projects": serializer.data})

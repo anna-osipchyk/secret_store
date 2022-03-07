@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_filters",
-    "app_users",
+    "app_auth",
     "app_projects",
     "rest_framework",
 ]
@@ -129,7 +129,7 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_REDIRECT_URL = "/api/my_projects/"
+LOGIN_REDIRECT_URL = "/api/projects/"
 # LOGOUT_REDIRECT_URL = '/projects/feed/'
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -138,4 +138,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 3,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'app_auth.backends.JWTAuthentication',
+    ),
 }
+AUTH_USER_MODEL = "app_auth.User"
