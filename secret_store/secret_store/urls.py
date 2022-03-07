@@ -21,7 +21,8 @@ from .settings import DEBUG
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("users/", include("app_users.urls")),
-    path("projects/", include("app_projects.urls")),
+    path("api/", include("app_projects.urls")),
+    path("api-auth/", include("rest_framework.urls")),
 ]
 if DEBUG:
     import debug_toolbar
