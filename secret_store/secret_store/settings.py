@@ -138,8 +138,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 3,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'app_auth.backends.JWTAuthentication',
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("app_auth.backends.JWTAuthentication",),
 }
 AUTH_USER_MODEL = "app_auth.User"
