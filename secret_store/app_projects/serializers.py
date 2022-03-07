@@ -19,8 +19,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         shared = validated_data.pop("shared")
         viewers = validated_data.pop("viewers")
         project = ProjectModel.objects.create(**validated_data)
-        project.viewers.set(viewers)
-        project.shared.set(shared)
+        project.viewers.set(viewers.all())
+        project.shared.set(shared.all())
         project.save()
         return project
 
