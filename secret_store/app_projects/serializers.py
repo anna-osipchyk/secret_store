@@ -26,10 +26,10 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get("name", instance.name)
-        viewers = validated_data.get("viewers", instance.viewers)
-        shared = validated_data.get("shared", instance.shared)
-        instance.viewers.set(viewers)
-        instance.shared.set(shared)
+        viewers_new = validated_data.get("viewers", instance.viewers)
+        shared_new = validated_data.get("shared", instance.shared)
+        instance.viewers.set(viewers_new.all())
+        instance.shared.set(shared_new.all())
         instance.save()
         return instance
 

@@ -2,7 +2,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.db.models import Q
 from rest_framework import permissions
 
-from rest_framework.generics import get_object_or_404, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.generics import (
+    get_object_or_404,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -14,7 +16,6 @@ from .models import ProjectModel, VariableModel
 
 
 class ViewPermission(permissions.BasePermission):
-
     def has_object_permission(self, request, view, obj):
         user_id = request.user.id
         is_viewer = obj.viewers.filter(id=user_id).exists()
@@ -31,12 +32,13 @@ class EditPermission(permissions.BasePermission):
 class OwnerPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         user_id = request.user.id
-        is_owner = obj.contains(user_id)
+        print(obj)
+        is_owner = obj.owner.id == user_id
         return is_owner
 
 
 class MyProjects(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, OwnerPermission]
 
     def get(self, request):
         my_projects = ProjectModel.objects.filter(owner__id=request.user.id)
@@ -45,16 +47,17 @@ class MyProjects(APIView):
         return Response({"my_projects": serializer.data})
 
     def post(self, request):
-        my_project = request.data.get("my_project")
-        serializer = ProjectSerializer(data=my_project)
+        serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({"OK": "Created"})
 
     def put(self, request, pk):
         my_project = get_object_or_404(ProjectModel, pk=pk)
-        data = request.data.get("my_project")
-        serializer = ProjectSerializer(instance=my_project, data=data, partial=True)
+        self.check_object_permissions(self.request, my_project)
+        serializer = ProjectSerializer(
+            instance=my_project, data=request.data, partial=True
+        )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({"my_projects": serializer.data})
@@ -90,14 +93,24 @@ class MyViewedProjects(APIView):
 
 
 class ProjectVariables(ViewSet):
+    def _setattrs(self):
+        method = getattr(self, "create")
+        setattr(self, "post", method)
+        method = getattr(self, "retrieve")
+        setattr(self, "get", method)
+        method = getattr(self, "update")
+        setattr(self, "patch", method)
+        method = getattr(self, "destroy")
+        setattr(self, "delete", method)
 
     def get_permissions(self):
-
-        if self.action == 'retrieve':
+        self._setattrs()
+        print(self.action)
+        if self.request.method == "GET":
             return [IsAuthenticated(), ViewPermission()]
-        if self.action == 'create':
+        if self.request.method == "POST":
             return [IsAuthenticated(), EditPermission()]
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.request.method in ["PATCH", "DELETE"]:
             return [IsAuthenticated(), OwnerPermission()]
 
     def get_project(self, fk):
@@ -128,7 +141,9 @@ class ProjectVariables(ViewSet):
 
         project = self.get_project(fk)
         variable = self.get_variable(pk)
-        serializer = VariableSerializer(instance=variable, data=request.data, partial=True)
+        serializer = VariableSerializer(
+            instance=variable, data=request.data, partial=True
+        )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response(serializer.data)
@@ -139,67 +154,3 @@ class ProjectVariables(ViewSet):
         variable = self.get_variable(pk)
         variable.delete()
         return Response({"OK": "DELETED"})
-
-    # def get(self, request, pk):
-    #
-    #     project = get_object_or_404(ProjectModel, pk=pk)
-    #     permissions = self.get_permissions()
-    #     print(permissions)
-    #     self.check_object_permissions(request, project)
-    #     variables_of_project = VariableModel.objects.filter(project__id=project.id)
-    #     serializer = VariableSerializer(variables_of_project, many=True)
-    #     return Response({"variables": serializer.data})
-    #
-    # def post(self, request, fk):
-    #
-    #     project = get_object_or_404(ProjectModel, pk=fk)
-    #
-    #     self.check_object_permissions(request, project)
-    #     variables_of_project = request.data.get("my_variables")
-    #     serializer = VariableSerializer(data=variables_of_project)
-    #     if serializer.is_valid(raise_exception=True):
-    #         serializer.save()
-    #     return Response({"OK": "Created"})
-    #
-    # def put(self, request, fk, pk):
-    #
-    #     my_project = get_object_or_404(ProjectModel, pk=fk)
-    #     data = request.data.get("my_variable")
-    #     variable = get_object_or_404(VariableModel, pk=pk)
-    #     serializer = VariableSerializer(instance=variable, data=data, partial=True)
-    #     if serializer.is_valid(raise_exception=True):
-    #         serializer.save()
-    #     return Response({"variables": serializer.data})
-    #
-    # def delete(self, request, fk, pk):
-    #     my_project = get_object_or_404(ProjectModel, pk=fk)
-    #     variable = get_object_or_404(VariableModel, pk=pk)
-    #     variable.delete()
-    #     return Response({"OK": "Deleted"})
-
-# class MySharedProjectsVariables(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request, fk):
-#         project = get_object_or_404(ProjectModel, pk=fk)
-#         variables_of_project = VariableModel.objects.filter(project__id=project.id)
-#         serializer = VariableSerializer(variables_of_project, many=True)
-#         return Response({"variables": serializer.data})
-#
-#     def post(self, request, fk):
-#         project = get_object_or_404(ProjectModel, pk=fk)
-#         variables_of_project = request.data.get("shared_variables")
-#         serializer = VariableSerializer(data=variables_of_project)
-#         if serializer.is_valid(raise_exception=True):
-#             serializer.save()
-#         return Response({"OK": "Created"})
-#
-#
-# class MyViewedProjectsVariables(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request, fk):
-#         project = get_object_or_404(ProjectModel, pk=fk)
-#         variables_of_project = VariableModel.objects.filter(project__id=project.id)
-#         serializer = VariableSerializer(variables_of_project, many=True)
-#         return Response({"variables": serializer.data})
