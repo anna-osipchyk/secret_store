@@ -20,9 +20,8 @@ from .settings import DEBUG
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("users/", include("app_users.urls")),
     path("api/", include("app_projects.urls")),
-    path("api-auth/", include("rest_framework.urls")),
+    path("api-auth/", include("app_auth.urls")),
 ]
 if DEBUG:
     import debug_toolbar

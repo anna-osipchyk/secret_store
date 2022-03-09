@@ -1,5 +1,6 @@
-from django.contrib.auth.models import User
 from django.db import models
+
+from app_auth.models import User
 
 
 class ProjectModel(models.Model):
