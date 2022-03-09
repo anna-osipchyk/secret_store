@@ -53,7 +53,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         """Строковое представление модели (отображается в консоли)"""
-        return self.email
+        return self.username
 
     @property
     def token(self):
@@ -88,6 +88,5 @@ class User(AbstractBaseUser, PermissionsMixin):
             settings.SECRET_KEY,
             algorithm="HS256",
         )
-        # import pdb; pdb.set_trace()
 
         return token
